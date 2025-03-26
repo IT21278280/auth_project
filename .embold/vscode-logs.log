@@ -1,0 +1,35 @@
+2025-03-26 19:29:39 info: Congratulations, your extension "Embold" is now active!
+2025-03-26 19:29:39 info: tempDirectory : c:\Users\USER\.vscode\extensions\embold-vscode.embold-0.1.9\temp
+2025-03-26 19:29:40 info: Extraction complete for source: c:\Users\USER\.vscode\extensions\embold-vscode.embold-0.1.9\resources\embold-scanner-archive.zip, destination: c:\Users\USER\.vscode\extensions\embold-vscode.embold-0.1.9\temp
+2025-03-26 19:29:40 info: Extension installed on machine OS : win32
+2025-03-26 19:29:40 info: Fetched the issues from DB
+2025-03-26 19:29:41 info: Embold extension version response:{"hasSupport":false,"version":"0.1.6","changeNotes":"<div> <p>Release Date: 09 Oct, 2023 <br><span>Bug fixes and improvements.</span></p> </div>"}
+2025-03-26 19:29:41 info: Current installed embold extension version : 0.1.9
+2025-03-26 19:29:41 info: Latest embold extension version on marketplace : 0.1.6
+2025-03-26 19:29:42 info: Java version installed on machine : 
+openjdk version "17.0.14" 2025-01-21 LTS
+OpenJDK Runtime Environment Microsoft-10800295 (build 17.0.14+7-LTS)
+OpenJDK 64-Bit Server VM Microsoft-10800295 (build 17.0.14+7-LTS, mixed mode, sharing)
+
+2025-03-26 19:29:42 info: Java installed on machine.
+2025-03-26 19:29:43 info: Row(s) deleted
+2025-03-26 19:34:29 info: Row(s) deleted
+2025-03-26 19:37:34 info: Row(s) deleted
+2025-03-26 19:40:36 info: Row(s) deleted
+2025-03-26 19:46:40 info: Row(s) deleted
+2025-03-26 19:49:42 info: Row(s) deleted
+2025-03-26 19:52:43 info: Row(s) deleted
+2025-03-26 19:55:45 info: Row(s) deleted
+2025-03-26 19:58:47 info: Row(s) deleted
+2025-03-26 20:01:49 info: Row(s) deleted
+2025-03-26 20:04:51 info: Row(s) deleted
+2025-03-26 20:07:52 info: Row(s) deleted
+2025-03-26 20:10:54 info: Row(s) deleted
+2025-03-26 20:13:56 info: Row(s) deleted
+2025-03-26 20:16:58 info: Row(s) deleted
+2025-03-26 20:20:07 info: Row(s) deleted
+2025-03-26 20:23:38 info: Row(s) deleted
+2025-03-26 20:26:40 info: Row(s) deleted
+2025-03-26 20:29:43 info: Row(s) deleted
+2025-03-26 20:36:43 info: Row(s) deleted
+2025-03-26 20:39:55 info: Row(s) deleted
