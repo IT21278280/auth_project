@@ -23,8 +23,8 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORGANIZATION: "rusithp-org"
-          SONAR_PROJECT_KEY: "rusithp-org"
+          SONAR_ORGANIZATION: "Rusith Fernando"
+          SONAR_PROJECT_KEY: "it21278280"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
