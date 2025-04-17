@@ -27,16 +27,16 @@ router.post('/register', async (req, res) => {
     });
     await user.save();
 
-    // // Send notification to notification microservice
-    // try {
-    //   await axios.post('http://notification:3003/api/notify', { // Update to 'notification:3003' for Docker Compose later
-    //     userId: user._id,
-    //     message: `Welcome to the app, ${username}!`,
-    //     email: user.email,
-    //   }, { family: 4 }); // Force IPv4
-    // } catch (notifyError) {
-    //   console.error('Failed to send notification:', notifyError.message);
-    // }
+    // Send notification to notification microservice
+    try {
+      await axios.post('http://notification:3003/api/notify', { // Update to 'notification:3003' for Docker Compose later
+        userId: user._id,
+        message: `Welcome to the app, ${username}!`,
+        email: user.email,
+      }, { family: 4 }); // Force IPv4
+    } catch (notifyError) {
+      console.error('Failed to send notification:', notifyError.message);
+    }
 
     res.status(201).json({ 
       message: 'User registered successfully', 
