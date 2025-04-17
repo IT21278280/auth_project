@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1744933258355" clover="3.2.0">
+  <project timestamp="1744933258356" name="All files">
+    <metrics statements="25" coveredstatements="13" conditionals="7" coveredconditionals="5" methods="2" coveredmethods="1" elements="34" coveredelements="19" complexity="0" loc="25" ncloc="25" packages="2" files="3" classes="3"/>
+    <package name="notification">
+      <metrics statements="10" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="1" coveredmethods="0"/>
+      <file name="jest.config.js" path="C:\Users\USER\Documents\GitHub\auth_project\notification\jest.config.js">
+        <metrics statements="1" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="0" type="stmt"/>
+      </file>
+      <file name="server.js" path="C:\Users\USER\Documents\GitHub\auth_project\notification\server.js">
+        <metrics statements="9" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="1" count="0" type="stmt"/>
+        <line num="2" count="0" type="stmt"/>
+        <line num="3" count="0" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="10" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="11" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="notification.routes">
+      <metrics statements="15" coveredstatements="13" conditionals="5" coveredconditionals="5" methods="1" coveredmethods="1"/>
+      <file name="notify.js" path="C:\Users\USER\Documents\GitHub\auth_project\notification\routes\notify.js">
+        <metrics statements="15" coveredstatements="13" conditionals="5" coveredconditionals="5" methods="1" coveredmethods="1"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="22" count="1" type="stmt"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="33" count="3" type="stmt"/>
+        <line num="34" count="3" type="cond" truecount="5" falsecount="0"/>
+        <line num="35" count="1" type="stmt"/>
+        <line num="38" count="2" type="stmt"/>
+        <line num="40" count="2" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="49" count="0" type="stmt"/>
+        <line num="51" count="2" type="stmt"/>
+        <line num="52" count="2" type="stmt"/>
+        <line num="56" count="1" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
