@@ -32,7 +32,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=IT21278280_auth_project
-            -Dsonar.organization=it21278280
+            -Dsonar.organization=it21278280-org
             -Dsonar.host.url=https://sonarcloud.io
 
       - name: Log in to Docker Hub
