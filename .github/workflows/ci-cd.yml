@@ -28,6 +28,7 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
+          # SONAR_TOKEN is defined in GitHub Secrets
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
