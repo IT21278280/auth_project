@@ -1,0 +1,10 @@
+# Ignore sensitive files
+.env
+node_modules
+npm-debug.log
+.git
+.gitignore
+coverage
+__tests__
+Dockerfile
+*.md
