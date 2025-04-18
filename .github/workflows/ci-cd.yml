@@ -15,21 +15,22 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'  # Cache npm dependencies
 
       - name: Install user-auth dependencies
-        run: cd user-auth && npm install
+        run: cd user-auth && npm ci
 
       - name: Run user-auth tests
         run: cd user-auth && npm test
 
       - name: Install user-profile dependencies
-        run: cd user-profile && npm install
+        run: cd user-profile && npm ci
 
       - name: Run user-profile tests
         run: cd user-profile && npm test
 
       - name: Install notification dependencies
-        run: cd notification && npm install
+        run: cd notification && npm ci
 
       - name: Run notification tests
         run: cd notification && npm test  
