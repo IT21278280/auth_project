@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1744971806347" clover="3.2.0">
-  <project timestamp="1744971806347" name="All files">
-    <metrics statements="47" coveredstatements="37" conditionals="10" coveredconditionals="7" methods="2" coveredmethods="2" elements="59" coveredelements="46" complexity="0" loc="47" ncloc="47" packages="2" files="2" classes="2"/>
+<coverage generated="1744979456235" clover="3.2.0">
+  <project timestamp="1744979456235" name="All files">
+    <metrics statements="47" coveredstatements="38" conditionals="10" coveredconditionals="7" methods="2" coveredmethods="2" elements="59" coveredelements="47" complexity="0" loc="47" ncloc="47" packages="2" files="2" classes="2"/>
     <package name="models">
       <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <file name="User.js" path="C:\Users\USER\Documents\GitHub\auth_project\user-auth\models\User.js">
@@ -12,9 +12,9 @@
       </file>
     </package>
     <package name="routes">
-      <metrics statements="44" coveredstatements="34" conditionals="10" coveredconditionals="7" methods="2" coveredmethods="2"/>
+      <metrics statements="44" coveredstatements="35" conditionals="10" coveredconditionals="7" methods="2" coveredmethods="2"/>
       <file name="auth.js" path="C:\Users\USER\Documents\GitHub\auth_project\user-auth\routes\auth.js">
-        <metrics statements="44" coveredstatements="34" conditionals="10" coveredconditionals="7" methods="2" coveredmethods="2"/>
+        <metrics statements="44" coveredstatements="35" conditionals="10" coveredconditionals="7" methods="2" coveredmethods="2"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
         <line num="3" count="1" type="stmt"/>
@@ -23,22 +23,22 @@
         <line num="6" count="1" type="stmt"/>
         <line num="7" count="1" type="stmt"/>
         <line num="9" count="1" type="stmt"/>
-        <line num="17" count="5" type="stmt"/>
-        <line num="18" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="17" count="8" type="stmt"/>
+        <line num="18" count="8" type="cond" truecount="2" falsecount="0"/>
         <line num="19" count="1" type="stmt"/>
-        <line num="22" count="4" type="stmt"/>
-        <line num="24" count="4" type="stmt"/>
-        <line num="25" count="4" type="stmt"/>
-        <line num="26" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="27" count="1" type="stmt"/>
-        <line num="30" count="3" type="stmt"/>
-        <line num="31" count="3" type="stmt"/>
-        <line num="32" count="3" type="stmt"/>
-        <line num="33" count="3" type="stmt"/>
-        <line num="36" count="3" type="stmt"/>
-        <line num="37" count="3" type="stmt"/>
-        <line num="43" count="0" type="stmt"/>
-        <line num="46" count="3" type="stmt"/>
+        <line num="22" count="7" type="stmt"/>
+        <line num="24" count="7" type="stmt"/>
+        <line num="25" count="7" type="stmt"/>
+        <line num="26" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="30" count="5" type="stmt"/>
+        <line num="31" count="5" type="stmt"/>
+        <line num="32" count="5" type="stmt"/>
+        <line num="33" count="5" type="stmt"/>
+        <line num="36" count="5" type="stmt"/>
+        <line num="37" count="5" type="stmt"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="46" count="5" type="stmt"/>
         <line num="50" count="0" type="stmt"/>
         <line num="51" count="0" type="stmt"/>
         <line num="56" count="1" type="stmt"/>

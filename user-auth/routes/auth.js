@@ -38,7 +38,7 @@ router.post(
           userId: user._id,
           email,
           message: `Welcome, ${username}! Your account has been created.`,
-        }, { family: 4 });
+        }, { family: 4, timeout: 5000 });
       } catch (notifyError) {
         console.error('Failed to send notification:', notifyError.message);
       }
@@ -47,7 +47,7 @@ router.post(
         user: { id: user._id, username, email },
       });
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Registration error:', error.message);
       res.status(500).json({ message: 'Server error', error: error.message });
     }
   }
