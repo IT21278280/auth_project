@@ -11,11 +11,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Set up Node.js for notification
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'  # Cache npm dependencies
+          cache: 'npm'
+          cache-dependency-path: notification/package-lock.json
+
+      - name: Install notification dependencies
+        run: cd notification && npm ci
+
+      - name: Run notification tests
+        run: cd notification && npm test
+
+      - name: Set up Node.js for user-auth
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: user-auth/package-lock.json
 
       - name: Install user-auth dependencies
         run: cd user-auth && npm ci
@@ -23,34 +37,33 @@ jobs:
       - name: Run user-auth tests
         run: cd user-auth && npm test
 
+      - name: Set up Node.js for user-profile
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: user-profile/package-lock.json
+
       - name: Install user-profile dependencies
         run: cd user-profile && npm ci
 
       - name: Run user-profile tests
         run: cd user-profile && npm test || true
 
-      - name: Install notification dependencies
-        run: cd notification && npm ci
-
-      - name: Run notification tests
-        run: cd notification && npm test  
-
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
-          # SONAR_TOKEN is defined in GitHub Secrets
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=IT21278280_auth_project
             -Dsonar.organization=it21278280
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,notification/coverage/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,user-profile/coverage/lcov.info,notification/coverage/lcov.info
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          # DOCKER_USERNAME and DOCKER_PASSWORD are defined in GitHub Secrets
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -77,6 +90,8 @@ jobs:
 
 
 
+
+
 # name: CI/CD Pipeline
 
 # on:
@@ -94,26 +109,42 @@ jobs:
 #         uses: actions/setup-node@v3
 #         with:
 #           node-version: '18'
+#           cache: 'npm'  # Cache npm dependencies
 
 #       - name: Install user-auth dependencies
-#         run: cd user-auth && npm install
+#         run: cd user-auth && npm ci
+
+#       - name: Run user-auth tests
+#         run: cd user-auth && npm test
 
 #       - name: Install user-profile dependencies
-#         run: cd user-profile && npm install
+#         run: cd user-profile && npm ci
+
+#       - name: Run user-profile tests
+#         run: cd user-profile && npm test || true
+
+#       - name: Install notification dependencies
+#         run: cd notification && npm ci
+
+#       - name: Run notification tests
+#         run: cd notification && npm test  
 
 #       - name: SonarCloud Scan
 #         uses: SonarSource/sonarqube-scan-action@v2
 #         env:
+#           # SONAR_TOKEN is defined in GitHub Secrets
 #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 #         with:
 #           args: >
 #             -Dsonar.projectKey=IT21278280_auth_project
 #             -Dsonar.organization=it21278280
 #             -Dsonar.host.url=https://sonarcloud.io
+#             -Dsonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,notification/coverage/lcov.info
 
 #       - name: Log in to Docker Hub
 #         uses: docker/login-action@v2
 #         with:
+#           # DOCKER_USERNAME and DOCKER_PASSWORD are defined in GitHub Secrets
 #           username: ${{ secrets.DOCKER_USERNAME }}
 #           password: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -129,50 +160,14 @@ jobs:
 #           docker build -t ${{ secrets.DOCKER_USERNAME }}/user-profile:latest .
 #           docker push ${{ secrets.DOCKER_USERNAME }}/user-profile:latest
 
-
-
-
-
-
-
-# name: CI/CD Pipeline
-
-# on:
-#   push:
-#     branches: [ main ]
-
-# jobs:
-#   build-and-push:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v3
-#         with:
-#           node-version: '18'
-
-#       - name: Install dependencies
-#         run: npm install
-
-#       - name: SonarCloud Scan
-#         uses: SonarSource/sonarqube-scan-action@v2
-#         env:
-#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#         with:
-#           args: >
-#             -Dsonar.projectKey=IT21278280_auth_project
-#             -Dsonar.organization=it21278280
-#             -Dsonar.host.url=https://sonarcloud.io
-
-#       - name: Log in to Docker Hub
-#         uses: docker/login-action@v2
-#         with:
-#           username: ${{ secrets.DOCKER_USERNAME }}
-#           password: ${{ secrets.DOCKER_PASSWORD }}
-
-#       - name: Build and push Docker image
+#       - name: Build and push notification image
 #         run: |
-#           docker build -t ${{ secrets.DOCKER_USERNAME }}/auth-microservice:latest .
-#           docker push ${{ secrets.DOCKER_USERNAME }}/auth-microservice:latest
+#           cd notification
+#           docker build -t ${{ secrets.DOCKER_USERNAME }}/notification:latest .
+#           docker push ${{ secrets.DOCKER_USERNAME }}/notification:latest
+
+
+
+
+
+
