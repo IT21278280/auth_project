@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">58.82% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>10/17</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>1/2</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">58.82% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>17/17</span>
+                <span class='fraction'>10/17</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -179,27 +179,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -273,14 +273,14 @@ router.post(
   ],
   async (req, res) =&gt; {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 &nbsp;
-    const { userId, message, email } = req.body;
+    const { userId, message, email } = <span class="cstat-no" title="statement not covered" >req.body;</span>
 &nbsp;
-    try {
-      await transporter.sendMail({
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      await transporter.sendMail({</span>
         from: `"App Notification" &lt;${process.env.SMTP_USER}&gt;`,
         to: email,
         subject: 'Welcome to the App!',
@@ -288,11 +288,11 @@ router.post(
         html: `&lt;p&gt;${message}&lt;/p&gt;`,
       });
 &nbsp;
-      console.log(`Email sent to ${email} for user ${userId}: ${message}`);
-      res.json({ message: 'Email notification sent successfully' });
+<span class="cstat-no" title="statement not covered" >      console.log(`Email sent to ${email} for user ${userId}: ${message}`);</span>
+<span class="cstat-no" title="statement not covered" >      res.json({ message: 'Email notification sent successfully' });</span>
     } catch (error) {
-      console.error(`Failed to send email to ${email}:`, error.message);
-      res.status(500).json({ error: 'Failed to send email', details: error.message });
+<span class="cstat-no" title="statement not covered" >      console.error(`Failed to send email to ${email}:`, error.message);</span>
+<span class="cstat-no" title="statement not covered" >      res.status(500).json({ error: 'Failed to send email', details: error.message });</span>
     }
   }
 );
@@ -349,7 +349,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-04-18T08:45:02.301Z
+                at 2025-04-18T09:34:48.445Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
