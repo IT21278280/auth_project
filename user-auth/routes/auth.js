@@ -38,7 +38,7 @@ router.post(
           userId: user._id,
           email,
           message: `Welcome, ${username}! Your account has been created.`,
-        }, { family: 4, timeout: 5000 });
+        }, { family: 4, timeout: 15000 });
       } catch (notifyError) {
         console.error('Failed to send notification:', notifyError.message);
       }
