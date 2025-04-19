@@ -252,6 +252,424 @@ All endpoints tested with Postman. Obtain a JWT token from `user-auth` login for
 - Open a pull request.
 
 
+## Deploying to AWS ECS with Fargate
+
+This section outlines the process to deploy the `user-auth`, `notification`, and `user-profile` microservices to AWS ECS with Fargate using the AWS Management Console. The deployment uses IAM roles for secure access, Security Groups to restrict traffic to HTTP port 80, and integrates SonarCloud for static code analysis to meet DevSecOps requirements.
+
+### Prerequisites
+
+- **AWS Account**: Active with administrative access (Owner ID: `471112988525`).
+- **Docker**: Installed locally to build and push images.
+- **GitHub Repository**: `https://github.com/IT21278280/auth_project`.
+- **SonarCloud Account**: Project key `IT21278280_auth_project`, organization `it21278280`.
+- **MongoDB Atlas**: Configured with `MONGO_URI` and network access set to `0.0.0.0/0` (temporary for testing).
+- **Gmail SMTP**: App Password for `notification` service.
+
+### Step 1: Create Subnets
+
+Create public and private subnets in the existing VPC (`vpc-0d75c31b34abe1e2a`).
+
+1. Log in to the AWS Console at `https://console.aws.amazon.com`.
+2. Navigate to **VPC** &gt; Your VPCs &gt; Select `vpc-0d75c31b34abe1e2a`.
+3. Go to **Subnets** &gt; Create subnet:
+   - **VPC ID**: `vpc-0d75c31b34abe1e2a`.
+   - Create 4 subnets:
+     - **Public Subnet 1**: Name: `public-subnet-1`, AZ: `us-east-1a`, CIDR: `10.0.1.0/24`.
+     - **Public Subnet 2**: Name: `public-subnet-2`, AZ: `us-east-1b`, CIDR: `10.0.2.0/24`.
+     - **Private Subnet 1**: Name: `private-subnet-1`, AZ: `us-east-1a`, CIDR: `10.0.3.0/24`.
+     - **Private Subnet 2**: Name: `private-subnet-2`, AZ: `us-east-1b`, CIDR: `10.0.4.0/24`.
+   - Note Subnet IDs (e.g., `subnet-11111111`, `subnet-22222222`, `subnet-33333333`, `subnet-44444444`).
+4. Enable auto-assign public IP for public subnets:
+   - Select `public-subnet-1` &gt; Actions &gt; Edit subnet settings &gt; Check **Enable auto-assign public IPv4 address** &gt; Save.
+   - Repeat for `public-subnet-2`.
+
+### Step 2: Configure VPC Networking
+
+Set up Internet Gateway, Route Tables, and NAT Gateway.
+
+1. **Create Internet Gateway**:
+   - VPC &gt; Internet Gateways &gt; Create internet gateway &gt; Name: `auth-igw` &gt; Create.
+   - Select `auth-igw` &gt; Actions &gt; Attach to VPC &gt; Select `vpc-0d75c31b34abe1e2a` &gt; Attach.
+2. **Create Route Table for Public Subnets**:
+   - VPC &gt; Route Tables &gt; Create route table &gt; Name: `public-rt`, VPC: `vpc-0d75c31b34abe1e2a` &gt; Create.
+   - Select `public-rt` &gt; Routes &gt; Edit routes &gt; Add route: Destination `0.0.0.0/0`, Target `auth-igw` &gt; Save.
+   - Subnet Associations &gt; Edit &gt; Select `public-subnet-1`, `public-subnet-2` &gt; Save.
+3. **Create NAT Gateway**:
+   - VPC &gt; NAT Gateways &gt; Create NAT Gateway &gt; Subnet: `public-subnet-1`, Create new EIP &gt; Create.
+   - Wait for status to be `Available`.
+4. **Create Route Table for Private Subnets**:
+   - Route Tables &gt; Create route table &gt; Name: `private-rt`, VPC: `vpc-0d75c31b34abe1e2a` &gt; Create.
+   - Select `private-rt` &gt; Routes &gt; Edit routes &gt; Add route: Destination `0.0.0.0/0`, Target NAT Gateway &gt; Save.
+   - Subnet Associations &gt; Edit &gt; Select `private-subnet-1`, `private-subnet-2` &gt; Save.
+
+### Step 3: Create Security Groups
+
+Restrict traffic to HTTP port 80 and allow outbound connections.
+
+1. **Security Group for ALB**:
+   - VPC &gt; Security Groups &gt; Create security group.
+   - Name: `auth-alb-sg`, Description: `Security group for ALB`, VPC: `vpc-0d75c31b34abe1e2a`.
+   - Inbound rules: Type: HTTP, Protocol: TCP, Port: 80, Source: `0.0.0.0/0`.
+   - Outbound rules: Default (All traffic).
+   - Create &gt; Note Group ID (e.g., `sg-11111111`).
+2. **Security Group for Fargate Tasks**:
+   - Name: `auth-fargate-sg`, Description: `Security group for Fargate tasks`, VPC: `vpc-0d75c31b34abe1e2a`.
+   - Inbound rules:
+     - Type: Custom TCP, Protocol: TCP, Port: 3001, Source: `auth-alb-sg` (`sg-11111111`).
+     - Type: Custom TCP, Protocol: TCP, Port: 3002, Source: `auth-alb-sg`.
+     - Type: Custom TCP, Protocol: TCP, Port: 3003, Source: `auth-alb-sg`.
+   - Outbound rules: Default (All traffic).
+   - Create &gt; Note Group ID (e.g., `sg-22222222`).
+
+### Step 4: Create IAM Roles
+
+Create roles for ECS task execution and tasks.
+
+1. **ECS Task Execution Role**:
+
+   - Services &gt; IAM &gt; Roles &gt; Create role.
+   - Trusted entity: AWS service &gt; ECS &gt; ECS Tasks.
+   - Permissions: Select `AmazonECSTaskExecutionRolePolicy`.
+   - Name: `ecsTaskExecutionRole` &gt; Create role.
+   - Note ARN (e.g., `arn:aws:iam::471112988525:role/ecsTaskExecutionRole`).
+
+2. **ECS Task Role**:
+
+   - Create role &gt; Trusted entity: AWS service &gt; ECS &gt; ECS Tasks.
+
+   - Permissions: Create inline policy:
+
+     ```json
+     {
+       "Version": "2012-10-17",
+       "Statement": [
+         {
+           "Effect": "Allow",
+           "Action": [
+             "logs:CreateLogStream",
+             "logs:PutLogEvents"
+           ],
+           "Resource": "*"
+         }
+       ]
+     }
+     ```
+
+   - Name: `ecsTaskRole` &gt; Create role.
+
+   - Note ARN (e.g., `arn:aws:iam::471112988525:role/ecsTaskRole`).
+
+### Step 5: Create ECR Repositories
+
+Store Docker images.
+
+1. Navigate to **Elastic Container Registry** &gt; Repositories &gt; Create repository.
+2. Create repositories:
+   - Name: `user-auth` &gt; Create &gt; Note URI (e.g., `471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth`).
+   - Repeat for `notification` and `user-profile`.
+3. Enable **Scan on Push**:
+   - Select each repository &gt; Edit &gt; Check **Scan on push** &gt; Save.
+
+### Step 6: Push Docker Images to ECR
+
+Push images from your local machine using minimal CLI commands.
+
+1. Authenticate Docker to ECR:
+
+   ```bash
+   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 471112988525.dkr.ecr.us-east-1.amazonaws.com
+   ```
+
+2. Build and push images:
+
+   ```bash
+   # user-auth
+   cd C:\Users\USER\Documents\GitHub\auth_project\user-auth
+   docker build -t user-auth .
+   docker tag user-auth:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
+   docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
+   
+   # notification
+   cd C:\Users\USER\Documents\GitHub\auth_project\notification
+   docker build -t notification .
+   docker tag notification:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
+   docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
+   
+   # user-profile
+   cd C:\Users\USER\Documents\GitHub\auth_project\user-profile
+   docker build -t user-profile .
+   docker tag user-profile:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
+   docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
+   ```
+
+### Step 7: Create ECS Cluster
+
+1. Navigate to **Elastic Container Service** &gt; Clusters &gt; Create Cluster.
+2. Cluster template: Networking only (Fargate).
+3. Cluster name: `auth-cluster` &gt; Create.
+
+### Step 8: Create Task Definitions
+
+Create task definitions for each microservice.
+
+1. **user-auth Task Definition**:
+   - ECS &gt; Task Definitions &gt; Create new task definition.
+   - Compatibility: Fargate.
+   - Name: `user-auth-task`.
+   - Task Role: `ecsTaskRole`.
+   - Task Execution Role: `ecsTaskExecutionRole`.
+   - CPU: 0.25 vCPU.
+   - Memory: 0.5 GB.
+   - Container Definitions &gt; Add container:
+     - Name: `user-auth`.
+     - Image: `471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest`.
+     - Port mappings: Container port `3002` (TCP).
+     - Environment variables:
+       - `PORT`: `3002`
+       - `JWT_SECRET`: `your_strong_secret_here_12345`
+       - `MONGO_URI`: `mongodb+srv://rusithp:jEDwp09p0wS3HcNa@cluster0.tz2dapj.mongodb.net/userAuthDB?retryWrites=true&w=majority`
+     - Log configuration: AWS CloudWatch Logs.
+       - Log group: `/ecs/user-auth`
+       - Stream prefix: `user-auth`
+   - Create.
+2. **notification Task Definition**:
+   - Name: `notification-task`.
+   - Same settings (Fargate, `ecsTaskRole`, `ecsTaskExecutionRole`, 0.25 vCPU, 0.5 GB).
+   - Container:
+     - Name: `notification`.
+     - Image: `471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest`.
+     - Port mappings: Container port `3003` (TCP).
+     - Environment variables:
+       - `PORT`: `3003`
+       - `SMTP_HOST`: `smtp.gmail.com`
+       - `SMTP_PORT`: `587`
+       - `SMTP_USER`: `your-email@gmail.com`
+       - `SMTP_PASS`: `your-app-password`
+     - Log group: `/ecs/notification`, Stream prefix: `notification`.
+   - Create.
+3. **user-profile Task Definition**:
+   - Name: `user-profile-task`.
+   - Same settings.
+   - Container:
+     - Name: `user-profile`.
+     - Image: `471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest`.
+     - Port mappings: Container port `3001` (TCP).
+     - Environment variables:
+       - `PORT`: `3001`
+       - `JWT_SECRET`: `your_strong_secret_here_12345`
+       - `MONGO_URI`: `mongodb+srv://rusithp:jEDwp09p0wS3HcNa@cluster0.tz2dapj.mongodb.net/userAuthDB?retryWrites=true&w=majority`
+     - Log group: `/ecs/user-profile`, Stream prefix: `user-profile`.
+   - Create.
+
+### Step 9: Create Application Load Balancer (ALB)
+
+Route traffic to services.
+
+1. **Create ALB**:
+   - Services &gt; EC2 &gt; Load Balancers &gt; Create Load Balancer &gt; Application Load Balancer.
+   - Name: `auth-alb`.
+   - Scheme: Internet-facing.
+   - IP address type: IPv4.
+   - Listeners: HTTP:80.
+   - VPC: `vpc-0d75c31b34abe1e2a`.
+   - Subnets: `public-subnet-1`, `public-subnet-2`.
+   - Security Groups: `auth-alb-sg`.
+   - Create.
+2. **Create Target Groups**:
+   - EC2 &gt; Target Groups &gt; Create target group.
+   - **user-auth-tg**:
+     - Target type: IP.
+     - Name: `user-auth-tg`.
+     - Protocol: HTTP, Port: `3002`.
+     - VPC: `vpc-0d75c31b34abe1e2a`.
+     - Health check path: `/`.
+     - Create.
+   - Repeat for:
+     - `notification-tg` (Port: `3003`).
+     - `user-profile-tg` (Port: `3001`).
+3. **Configure ALB Listener Rules**:
+   - Load Balancers &gt; Select `auth-alb` &gt; Listeners &gt; View/edit rules for HTTP:80.
+   - Add rule: Condition: Path is `/api/auth/*` &gt; Action: Forward to `user-auth-tg`.
+   - Add rule: Condition: Path is `/api/notify/*` &gt; Action: Forward to `notification-tg`.
+   - Add rule: Condition: Path is `/api/profile/*` &gt; Action: Forward to `user-profile-tg`.
+   - Save.
+
+### Step 10: Deploy ECS Services
+
+Deploy each microservice.
+
+1. **user-auth Service**:
+   - ECS &gt; Clusters &gt; `auth-cluster` &gt; Services &gt; Create.
+   - Launch type: Fargate.
+   - Task definition: `user-auth-task` (latest revision).
+   - Service name: `user-auth-service`.
+   - Number of tasks: 1.
+   - VPC: `vpc-0d75c31b34abe1e2a`.
+   - Subnets: `private-subnet-1`, `private-subnet-2`.
+   - Security Groups: `auth-fargate-sg`.
+   - Public IP: Enabled.
+   - Load balancing: Application Load Balancer.
+     - Load balancer: `auth-alb`.
+     - Container: `user-auth:3002` &gt; Target group: `user-auth-tg`.
+   - Create.
+2. **notification Service**:
+   - Same settings.
+   - Task definition: `notification-task`.
+   - Service name: `notification-service`.
+   - Container: `notification:3003` &gt; Target group: `notification-tg`.
+   - Create.
+3. **user-profile Service**:
+   - Task definition: `user-profile-task`.
+   - Service name: `user-profile-service`.
+   - Container: `user-profile:3001` &gt; Target group: `user-profile-tg`.
+   - Create.
+
+### Step 11: Integrate SonarCloud
+
+Set up static code analysis.
+
+1. **Configure SonarCloud**:
+
+   - Log in to `sonarcloud.io`.
+   - Create project: `IT21278280_auth_project` in organization `it21278280`.
+   - Generate token (e.g., `sonar_token_1234567890abcdef`).
+
+2. **Add** `.sonarcloud.properties`:
+
+   - Create file in project root: `.sonarcloud.properties`.
+
+   ```properties
+   sonar.organization=it21278280
+   sonar.projectKey=IT21278280_auth_project
+   sonar.sources=user-auth,notification,user-profile
+   sonar.exclusions=**/node_modules/**,**/coverage/**,**/test/**
+   sonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,notification/coverage/lcov.info,user-profile/coverage/lcov.info
+   sonar.host.url=https://sonarcloud.io
+   ```
+
+3. **Update GitHub Actions**:
+
+   - Create file: `.github/workflows/ci-cd.yml`.
+
+   ```yaml
+   name: CI/CD Pipeline
+   on:
+     push:
+       branches: [ main ]
+   jobs:
+     build-and-test:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v3
+         - name: Set up Node.js
+           uses: actions/setup-node@v3
+           with:
+             node-version: '18'
+         - name: Install user-auth dependencies
+           run: cd user-auth && npm install
+         - name: Run user-auth tests
+           run: cd user-auth && npm test
+         - name: Install notification dependencies
+           run: cd notification && npm install
+         - name: Run notification tests
+           run: cd notification && npm test
+         - name: Install user-profile dependencies
+           run: cd user-profile && npm install
+         - name: Run user-profile tests
+           run: cd user-profile && npm test
+         - name: SonarCloud Scan
+           uses: SonarSource/sonarcloud-github-action@master
+           env:
+             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+         - name: Login to Amazon ECR
+           uses: aws-actions/amazon-ecr-login@v1
+           env:
+             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             AWS_REGION: us-east-1
+         - name: Build and Push user-auth
+           run: |
+             cd user-auth
+             docker build -t user-auth .
+             docker tag user-auth:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
+             docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
+         - name: Build and Push notification
+           run: |
+             cd notification
+             docker build -t notification .
+             docker tag notification:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
+             docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
+         - name: Build and Push user-profile
+           run: |
+             cd user-profile
+             docker build -t user-profile .
+             docker tag user-profile:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
+             docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
+         - name: Update ECS Services
+           run: |
+             aws ecs update-service --cluster auth-cluster --service user-auth-service --force-new-deployment --region us-east-1
+             aws ecs update-service --cluster auth-cluster --service notification-service --force-new-deployment --region us-east-1
+             aws ecs update-service --cluster auth-cluster --service user-profile-service --force-new-deployment --region us-east-1
+           env:
+             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+             AWS_REGION: us-east-1
+   ```
+
+4. **Add GitHub Secrets**:
+
+   - GitHub &gt; Settings &gt; Secrets and variables &gt; Actions &gt; New repository secret:
+     - `SONAR_TOKEN`: `<sonar_token_1234567890abcdef>`
+     - `AWS_ACCESS_KEY_ID`: Your AWS IAM user access key.
+     - `AWS_SECRET_ACCESS_KEY`: Your AWS IAM user secret key.
+
+5. **Commit Changes**:
+
+   ```bash
+   cd C:\Users\USER\Documents\GitHub\auth_project
+   git add .sonarcloud.properties .github/workflows/ci-cd.yml
+   git commit -m "Added SonarCloud and ECS deployment pipeline"
+   git push origin main
+   ```
+
+### Step 12: Test Deployment
+
+1. **Get ALB DNS Name**:
+   - EC2 &gt; Load Balancers &gt; Select `auth-alb` &gt; Note **DNS name** (e.g., `auth-alb-1234567890.us-east-1.elb.amazonaws.com`).
+2. **Test with Postman**:
+   - Update endpoints from the API Endpoints section:
+     - `http://<ALB_DNS>/api/auth/register`
+     - `http://<ALB_DNS>/api/notify`
+     - `http://<ALB_DNS>/api/profile`
+   - Run all tests (register, login, create profile, etc.).
+   - Verify Gmail for notification emails.
+3. **Check Logs**:
+   - Services &gt; CloudWatch &gt; Log groups &gt; `/ecs/user-auth`, `/ecs/notification`, `/ecs/user-profile`.
+   - Confirm `MongoDB connected` and no errors.
+
+### Step 13: Verify SonarCloud
+
+- GitHub &gt; Actions &gt; Check workflow status.
+- SonarCloud &gt; `IT21278280_auth_project` &gt; Verify scan results (coverage ≥ 60%, minimal issues).
+
+### Step 14: Secure and Optimize
+
+1. **MongoDB Atlas**:
+   - Network Access &gt; Edit &gt; Replace `0.0.0.0/0` with `10.0.0.0/16` or ALB IP.
+2. **AWS Secrets Manager**:
+   - Services &gt; Secrets Manager &gt; Store new secret.
+   - Create secrets for `MONGO_URI`, `JWT_SECRET`, `SMTP_USER`, `SMTP_PASS`.
+   - Update task definitions (ECS &gt; Task Definitions &gt; Create new revision):
+     - Add secrets under container environment:
+       - Name: `MONGO_URI` &gt; Value from: Select secret ARN.
+     - Update `ecsTaskRole` in IAM to allow `secretsmanager:GetSecretValue`.
+3. **Auto Scaling**:
+   - ECS &gt; `auth-cluster` &gt; `user-auth-service` &gt; Update service:
+     - Minimum tasks: 1, Maximum tasks: 4.
+     - Add scaling policy: Target tracking &gt; CPU utilization &gt; Target value: 70%.
+
+
 
 ## License
 This project is licensed under the MIT License.
