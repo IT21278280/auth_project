@@ -93,81 +93,65 @@ jobs:
 
 
 # name: CI/CD Pipeline
-
 # on:
 #   push:
 #     branches: [ main ]
-
 # jobs:
-#   build-and-push:
+#   build-and-test:
 #     runs-on: ubuntu-latest
 #     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
+#       - uses: actions/checkout@v3
 #       - name: Set up Node.js
 #         uses: actions/setup-node@v3
 #         with:
 #           node-version: '18'
-#           cache: 'npm'  # Cache npm dependencies
-
 #       - name: Install user-auth dependencies
-#         run: cd user-auth && npm ci
-
+#         run: cd user-auth && npm install
 #       - name: Run user-auth tests
 #         run: cd user-auth && npm test
-
-#       - name: Install user-profile dependencies
-#         run: cd user-profile && npm ci
-
-#       - name: Run user-profile tests
-#         run: cd user-profile && npm test || true
-
 #       - name: Install notification dependencies
-#         run: cd notification && npm ci
-
+#         run: cd notification && npm install
 #       - name: Run notification tests
-#         run: cd notification && npm test  
-
+#         run: cd notification && npm test
+#       - name: Install user-profile dependencies
+#         run: cd user-profile && npm install
+#       - name: Run user-profile tests
+#         run: cd user-profile && npm test
 #       - name: SonarCloud Scan
-#         uses: SonarSource/sonarqube-scan-action@v2
+#         uses: SonarSource/sonarcloud-github-action@master
 #         env:
-#           # SONAR_TOKEN is defined in GitHub Secrets
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#         with:
-#           args: >
-#             -Dsonar.projectKey=IT21278280_auth_project
-#             -Dsonar.organization=it21278280
-#             -Dsonar.host.url=https://sonarcloud.io
-#             -Dsonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,notification/coverage/lcov.info
-
-#       - name: Log in to Docker Hub
-#         uses: docker/login-action@v2
-#         with:
-#           # DOCKER_USERNAME and DOCKER_PASSWORD are defined in GitHub Secrets
-#           username: ${{ secrets.DOCKER_USERNAME }}
-#           password: ${{ secrets.DOCKER_PASSWORD }}
-
-#       - name: Build and push user-auth image
+#       - name: Login to Amazon ECR
+#         uses: aws-actions/amazon-ecr-login@v1
+#         env:
+#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           AWS_REGION: us-east-1
+#       - name: Build and Push user-auth
 #         run: |
 #           cd user-auth
-#           docker build -t ${{ secrets.DOCKER_USERNAME }}/user-auth:latest .
-#           docker push ${{ secrets.DOCKER_USERNAME }}/user-auth:latest
-
-#       - name: Build and push user-profile image
-#         run: |
-#           cd user-profile
-#           docker build -t ${{ secrets.DOCKER_USERNAME }}/user-profile:latest .
-#           docker push ${{ secrets.DOCKER_USERNAME }}/user-profile:latest
-
-#       - name: Build and push notification image
+#           docker build -t user-auth .
+#           docker tag user-auth:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
+#           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
+#       - name: Build and Push notification
 #         run: |
 #           cd notification
-#           docker build -t ${{ secrets.DOCKER_USERNAME }}/notification:latest .
-#           docker push ${{ secrets.DOCKER_USERNAME }}/notification:latest
-
-
-
-
-
-
+#           docker build -t notification .
+#           docker tag notification:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
+#           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
+#       - name: Build and Push user-profile
+#         run: |
+#           cd user-profile
+#           docker build -t user-profile .
+#           docker tag user-profile:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
+#           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
+#       - name: Update ECS Services
+#         run: |
+#           aws ecs update-service --cluster auth-cluster --service user-auth-service --force-new-deployment --region us-east-1
+#           aws ecs update-service --cluster auth-cluster --service notification-service --force-new-deployment --region us-east-1
+#           aws ecs update-service --cluster auth-cluster --service user-profile-service --force-new-deployment --region us-east-1
+#         env:
+#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           AWS_REGION: us-east-1
