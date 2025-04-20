@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: user-profile/package-lock.json
 
       - name: Install user-profile dependencies
-        run: cd user-profile && npm ci
+        run: cd user-profile && npm install
 
       - name: Run user-profile tests
         run: cd user-profile && npm test || true
