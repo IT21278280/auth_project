@@ -3,13 +3,19 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
 
+console.log('SMTP Auth:', {
+  user: process.env.SMTP_USER,
+  pass: process.env.SMTP_PASS ? '[REDACTED]' : undefined
+});
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
+  // host: process.env.SMTP_HOST,
+  // port: process.env.SMTP_PORT,
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
   secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USER || 'rpfernando1999@gmail.com',
+    pass: process.env.SMTP_PASS || 'ipwm psfs kooj wthl',
   },
 });
 
