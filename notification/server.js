@@ -11,9 +11,11 @@ console.log('SMTP Config:', {
     portApp: process.env.PORT
   });
 const app = express();
-app.get('/debug', (req, res) => res.json({ status: 'Notification service OK' }));
+
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.use(express.json());
+app.get('/debug', (req, res) => res.json({ status: 'Notification service OK' }));
+
 app.use('/api/notify', notifyRoutes);
 
 module.exports = app;
