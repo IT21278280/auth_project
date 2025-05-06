@@ -2,90 +2,93 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js for notification
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: notification/package-lock.json
-
-      - name: Install notification dependencies
-        run: cd notification && npm ci
-
-      - name: Run notification tests
-        run: cd notification && npm test
-
-      - name: Set up Node.js for user-auth
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: user-auth/package-lock.json
 
       - name: Install user-auth dependencies
         run: cd user-auth && npm ci
+        working-directory: user-auth
 
       - name: Run user-auth tests
         run: cd user-auth && npm test
+        working-directory: user-auth
 
-      - name: Set up Node.js for user-profile
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: user-profile/package-lock.json
+      - name: Install notification dependencies
+        run: cd notification && npm ci
+        working-directory: notification
+
+      - name: Run notification tests
+        run: cd notification && npm test
+        working-directory: notification
 
       - name: Install user-profile dependencies
-        run: cd user-profile && npm install
+        run: cd user-profile && npm ci
+        working-directory: user-profile
 
       - name: Run user-profile tests
         run: cd user-profile && npm test || true
+        working-directory: user-profile
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v2
+        uses: SonarSource/sonarcloud-github-action@master
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=IT21278280_auth_project
-            -Dsonar.organization=it21278280
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,user-profile/coverage/lcov.info,notification/coverage/lcov.info
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
 
-      - name: Build and push user-auth image
+      - name: Build and Push user-auth image
         run: |
           cd user-auth
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/user-auth:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/user-auth:latest
+          docker build -t new-user-auth .
+          docker tag new-user-auth:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-auth:latest
+          docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-auth:latest
+        working-directory: user-auth
 
-      - name: Build and push user-profile image
-        run: |
-          cd user-profile
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/user-profile:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/user-profile:latest
-
-      - name: Build and push notification image
+      - name: Build and Push notification image
         run: |
           cd notification
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/notification:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/notification:latest
+          docker build -t new-notification .
+          docker tag new-notification:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-notification:latest
+          docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-notification:latest
+        working-directory: notification
 
+      - name: Build and Push user-profile image
+        run: |
+          cd user-profile
+          docker build -t new-user-profile .
+          docker tag new-user-profile:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-profile:latest
+          docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-profile:latest
+        working-directory: user-profile
 
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster new-auth-cluster --service new-user-auth-service --force-new-deployment --region us-east-1
+          aws ecs update-service --cluster new-auth-cluster --service new-notification-service --force-new-deployment --region us-east-1
+          aws ecs update-service --cluster new-auth-cluster --service new-user-profile-service --force-new-deployment --region us-east-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
 
 
 
@@ -93,65 +96,94 @@ jobs:
 
 
 # name: CI/CD Pipeline
+
 # on:
 #   push:
 #     branches: [ main ]
+
 # jobs:
-#   build-and-test:
+#   build-and-push:
 #     runs-on: ubuntu-latest
 #     steps:
-#       - uses: actions/checkout@v3
-#       - name: Set up Node.js
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Node.js for notification
 #         uses: actions/setup-node@v3
 #         with:
 #           node-version: '18'
-#       - name: Install user-auth dependencies
-#         run: cd user-auth && npm install
-#       - name: Run user-auth tests
-#         run: cd user-auth && npm test
+#           cache: 'npm'
+#           cache-dependency-path: notification/package-lock.json
+
 #       - name: Install notification dependencies
-#         run: cd notification && npm install
+#         run: cd notification && npm ci
+
 #       - name: Run notification tests
 #         run: cd notification && npm test
+
+#       - name: Set up Node.js for user-auth
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: user-auth/package-lock.json
+
+#       - name: Install user-auth dependencies
+#         run: cd user-auth && npm ci
+
+#       - name: Run user-auth tests
+#         run: cd user-auth && npm test
+
+#       - name: Set up Node.js for user-profile
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: user-profile/package-lock.json
+
 #       - name: Install user-profile dependencies
 #         run: cd user-profile && npm install
+
 #       - name: Run user-profile tests
-#         run: cd user-profile && npm test
+#         run: cd user-profile && npm test || true
+
 #       - name: SonarCloud Scan
-#         uses: SonarSource/sonarcloud-github-action@master
+#         uses: SonarSource/sonarqube-scan-action@v2
 #         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#       - name: Login to Amazon ECR
-#         uses: aws-actions/amazon-ecr-login@v1
-#         env:
-#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           AWS_REGION: us-east-1
-#       - name: Build and Push user-auth
+#         with:
+#           args: >
+#             -Dsonar.projectKey=IT21278280_auth_project
+#             -Dsonar.organization=it21278280
+#             -Dsonar.host.url=https://sonarcloud.io
+#             -Dsonar.javascript.lcov.reportPaths=user-auth/coverage/lcov.info,user-profile/coverage/lcov.info,notification/coverage/lcov.info
+
+#       - name: Log in to Docker Hub
+#         uses: docker/login-action@v2
+#         with:
+#           username: ${{ secrets.DOCKER_USERNAME }}
+#           password: ${{ secrets.DOCKER_PASSWORD }}
+
+#       - name: Build and push user-auth image
 #         run: |
 #           cd user-auth
-#           docker build -t user-auth .
-#           docker tag user-auth:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
-#           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-auth:latest
-#       - name: Build and Push notification
-#         run: |
-#           cd notification
-#           docker build -t notification .
-#           docker tag notification:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
-#           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/notification:latest
-#       - name: Build and Push user-profile
+#           docker build -t ${{ secrets.DOCKER_USERNAME }}/user-auth:latest .
+#           docker push ${{ secrets.DOCKER_USERNAME }}/user-auth:latest
+
+#       - name: Build and push user-profile image
 #         run: |
 #           cd user-profile
-#           docker build -t user-profile .
-#           docker tag user-profile:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
-#           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/user-profile:latest
-#       - name: Update ECS Services
+#           docker build -t ${{ secrets.DOCKER_USERNAME }}/user-profile:latest .
+#           docker push ${{ secrets.DOCKER_USERNAME }}/user-profile:latest
+
+#       - name: Build and push notification image
 #         run: |
-#           aws ecs update-service --cluster auth-cluster --service user-auth-service --force-new-deployment --region us-east-1
-#           aws ecs update-service --cluster auth-cluster --service notification-service --force-new-deployment --region us-east-1
-#           aws ecs update-service --cluster auth-cluster --service user-profile-service --force-new-deployment --region us-east-1
-#         env:
-#           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           AWS_REGION: us-east-1
+#           cd notification
+#           docker build -t ${{ secrets.DOCKER_USERNAME }}/notification:latest .
+#           docker push ${{ secrets.DOCKER_USERNAME }}/notification:latest
+
+
+
+
+
+

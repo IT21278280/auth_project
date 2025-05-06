@@ -4,6 +4,8 @@ const notifyRoutes = require('./routes/notify');
 
 dotenv.config();
 const app = express();
+
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.use(express.json());
 app.use('/api/notify', notifyRoutes);
 
