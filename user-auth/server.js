@@ -6,13 +6,12 @@ const authRoutes = require('./routes/auth');
 
 dotenv.config();
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
-});
+
 
 const app = express();
 app.use(express.json());
+
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 // Debug MONGO_URI
 console.log('MONGO_URI:', process.env.MONGO_URI);

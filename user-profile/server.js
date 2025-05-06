@@ -6,11 +6,15 @@ const profileRoutes = require('./routes/profile');
 dotenv.config();
 
 const app = express();
+
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
 app.use(express.json());
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
-});
+
+
+
+
+
 console.log('MONGO_URI:', process.env.MONGO_URI);
 
 const connectWithRetry = async (retries = 5, delay = 5000) => {
