@@ -15,9 +15,9 @@ const app = express();
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 app.use(express.json());
 app.get('/debug', (req, res) => res.json({ status: 'Notification service OK' }));
-
+console.log('Mounting /api/notify route');
 app.use('/api/notify', notifyRoutes);
-
+console.log('Routes mounted');
 module.exports = app;
 
 
