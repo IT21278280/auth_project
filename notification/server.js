@@ -49,6 +49,9 @@ app.use((req, res, next) => {
     next();
 });
 
+
+app.post('/api/notify/fallback', (req, res) => res.json({ status: 'Fallback route hit' }));
+
 module.exports = app;
 
 
