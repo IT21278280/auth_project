@@ -12,6 +12,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Debug directory structure
+        run: |
+          ls -la
+          find . -maxdepth 2
+        shell: bash
 
       - name: Set up Node.js for user-auth
         uses: actions/setup-node@v3
@@ -62,42 +70,46 @@ jobs:
         continue-on-error: true
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
         continue-on-error: true
 
       - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
 
       - name: Build and Push user-auth image
+        working-directory: user-auth
         run: |
-          cd user-auth
           docker build -t new-user-auth .
           docker tag new-user-auth:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-auth:latest
           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-auth:latest
-        working-directory: user-auth
+        env:
+          DOCKER_BUILDKIT: 1
 
       - name: Build and Push notification image
+        working-directory: notification
         run: |
-          cd notification
           docker build -t new-notification .
           docker tag new-notification:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-notification:v1
           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-notification:v1
-        working-directory: notification
+        env:
+          DOCKER_BUILDKIT: 1
 
       - name: Build and Push user-profile image
+        working-directory: user-profile
         run: |
-          cd user-profile
           docker build -t new-user-profile .
           docker tag new-user-profile:latest 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-profile:latest
           docker push 471112988525.dkr.ecr.us-east-1.amazonaws.com/new-user-profile:latest
-        working-directory: user-profile
+        env:
+          DOCKER_BUILDKIT: 1
 
       - name: Deploy to ECS
         run: |
@@ -108,7 +120,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
-
 
 
 
