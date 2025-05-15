@@ -6,7 +6,23 @@ const authRoutes = require('./routes/auth');
 
 dotenv.config();
 
+// Explicitly specify .env path
+const envPath = require('path').resolve(__dirname, '.env');
+console.log('Loading .env from:', envPath);
+dotenv.config({ path: envPath });
 
+// Debug environment variables
+console.log('Environment Variables:', {
+  MONGO_URI: process.env.MONGO_URI,
+  PORT: process.env.PORT,
+  JWT_SECRET: process.env.JWT_SECRET ? '[REDACTED]' : undefined
+});
+
+// Exit if MONGO_URI is undefined
+if (!process.env.MONGO_URI) {
+  console.error('Error: MONGO_URI is not defined in .env file');
+  process.exit(1);
+}
 
 const app = express();
 app.use(express.json());
