@@ -8,7 +8,7 @@
 # EXPOSE 3003
 # CMD ["node", "index.js"]
 
-#Fixed errors
+#Fixed error
 
 
 FROM node:18-alpine
