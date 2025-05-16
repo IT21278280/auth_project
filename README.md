@@ -1,4 +1,5 @@
 # Authentication Microservices Project
+#test 1
 
 This project implements a microservices-based authentication system using Node.js, Express, and MongoDB Atlas. It consists of three microservices: `user-auth` (handles user registration and login), `notification` (sends email notifications), and `user-profile` (manages user profiles). The services are containerized with Docker, orchestrated with Docker Compose, and integrated with a CI/CD pipeline and security scanning.
 
